@@ -1,36 +1,53 @@
-// Set up database connection
-var mysql = require('mysql');
-var connection;
+var connection = require('../config/connection.js');
 
-// add in the environment variable option for JAWSDB for heroku
-if (process.env.JAWSDB_URL) {
-	connection = mysql.createConnection(process.env.JAWSDB_URL);
-} else {
-	connection = mysql.createConnection({
-		host: 'localhost',
-		user: 'root',
-		password: 'Semper86',
-		database: 'burgers_db'
-	});
+function printQuestionMarks(num){
+  var arr = [];
+
+  for (var i=0; i<num; i++){
+    arr.push('?')
+  }
+
+  return arr.toString();
+}
+
+function objToSql(ob){
+
+  var arr = [];
+
+  for (var key in ob) {
+    arr.push(key + '=' + ob[key]);
+  }
+
+  return arr.toString();
+}
+
+var orm = {
+	all: function(tableInput, cb) {
+		var queryString = 'SELECT * FROM ' + tableInput + ';';
+		connection.query(queryString, function(err, result) {
+			cb(result);
+		});
+	},
+
+	create: function(table, cols, vals, cb) {
+		var queryString = 'INSERT INTO ' + table + ' (' + cols.toString() +') ' + 'VALUES (' + printQuestionMarks(vals.length) + ') ';
+
+		console.log(queryString)
+
+		connection.query(queryString, vals, function(err, result){
+			cb(result);
+		});
+	},
+
+	update: function(table, objColVals, condition, cb) {
+		var queryString = 'UPDATE ' + table + ' SET ' + objToSql(objColVals) + ' WHERE ' + condition;
+
+		console.log(queryString);
+
+		connection.query(queryString, function(err, result){
+			cb(result);
+		});
+	}
 };
 
-
-var connection = mysql.createConnection({
- 	host: "localhost",
- 	port: 3306,
-	user: "root",
- 	password: "Semper86",
- 	database: "burgers_db" 
- });
-
-
-connection.connect(function(err) {
-	if (err) {
-		console.error('error conencting: ' + err.stack);
-		return;
-	}
-	console.log('connected as id ' + connection.threadId);
-});
-
-// export connection back to orm
-module.exports = connection;
+module.exports = orm;
